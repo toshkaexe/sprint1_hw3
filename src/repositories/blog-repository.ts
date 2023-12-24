@@ -1,50 +1,68 @@
-import {db} from "../db/db"
+import {blogCollection, db} from "../db/db"
 import {blogRoute} from "../routes/blog-route";
-import {BlogModel} from "../models/blogs/output";
+import {OutputBlogType} from "../models/blogs/output";
 import {UpdatePostModel} from "../models/posts/input";
 import {Params} from "../models/common";
 import {CreateBlogModel, UpdateBlogModel} from "../models/blogs/input";
+import {blogMapper} from "../models/blogs/mappers/mapper";
+import {ObjectId} from "mongodb";
+import {BlogDBType} from "../models/db/db";
 
 export class BlogRepository {
-    static getAllBlogs() {
-        return db.blogs
+    static async getAllBlogs(): Promise<OutputBlogType[]> {
+        const blogs =
+            await blogCollection.find({}).toArray();
+        return blogs.map(blogMapper)
     }
 
-    static getBlogById(id: string) {
-        const blog = db.blogs.find((b: { id: string }) => b.id === id);
-        if (!blog) {
+    static async getBlogById(id: string): Promise<OutputBlogType | null> {
+        try {
+            const blog = await blogCollection.findOne({_id: new ObjectId(id)});
+            if (!blog) {
+                return null
+            }
+            return blogMapper(blog)
+        } catch (err) {
             return null;
         }
-        return blog;
-    }
-
-    static createBlog(creteBlog: BlogModel) {
-        return db.blogs.push(creteBlog);
-
     }
 
 
-    static removeAllBlogs() {
-        db.blogs=[];
-    }
-
-
-    static updateBlog(params: UpdateBlogModel, p1: Params) {
-        const blogIndex = db.blogs
-            .findIndex(p => p.id === p1.id)
-        const blog = this.getBlogById(p1.id)
-        if (!blog) {
-            return false
+    static async createBlog(createdData: CreateBlogModel): Promise<String> {
+        const createdAt = new Date();
+        const newBlog: BlogDBType = {
+            ...createdData,
+            createdAt: createdAt.toISOString(),
+            isMembership: false
         }
-        const updateBlog = {
-            ...blog,
-            name: params.name,
-            description: params.description,
-            websiteUrl: params.websiteUrl
+        const blog = await blogCollection.insertOne(newBlog)
+
+        return blog.insertedId.toString();
+    }
+
+
+    static async updateBlog(id: string, updatedData: UpdateBlogModel): Promise<boolean> {
+        try {
+            const blog = await blogCollection.updateOne({_id: new ObjectId(id)},
+                {
+                    $set: {
+                        name: updatedData.name,
+                        description: updatedData.description,
+                        websiteUrl: updatedData.websiteUrl
+                    }
+                })
+            return !!blog.matchedCount;
+        } catch (err) {
+            return false;
         }
-        db.blogs.splice(blogIndex, 1, updateBlog)
-        return true;
+    }
 
-
+    static async deleteBlogById(id: string): Promise<boolean> {
+        try {
+            const blog = await blogCollection.deleteOne({_id: new ObjectId(id)})
+            return !!blog.deletedCount;
+        } catch (err) {
+            return false;
+        }
     }
 }

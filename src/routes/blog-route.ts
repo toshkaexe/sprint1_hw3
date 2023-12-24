@@ -12,40 +12,54 @@ import {
     RequestWithParamsAndBody, StatusCode
 } from "../models/common";
 import {CreateBlogModel} from "../models/blogs/input";
+import {ObjectId} from "mongodb";
 
 
 export const blogRoute = Router({})
 
-blogRoute.get('/', (req, res) => {
-    const blogs = BlogRepository.getAllBlogs();
-    res.send(blogs);
+blogRoute.get('/', async (req, res) => {
+    const blogs = await BlogRepository.getAllBlogs();
+    res.status(200).send(blogs);
 });
 
 
-blogRoute.get('/:id', (req: Request, res: Response) => {
-
+blogRoute.get('/:id', async (req: Request, res: Response) => {
     const id = req.params.id
-
-    const blog = BlogRepository.getBlogById(id)
-
-    if (!blog) {
+    if (!ObjectId.isValid(id)) {
         res.sendStatus(404)
-        return
+        return;
 
     }
 
-    res.status(200).send(blog)
 
+    const blog = await BlogRepository.getBlogById(id)
+
+    if (!blog) {
+        res.sendStatus(StatusCode.NotFound_404)
+        return
+
+    } else {
+
+        res.status(StatusCode.OK_200).send(blog)
+    }
 })
-
 
 
 blogRoute.post(
     '/',
     authMiddleware,
     blogValidation(),
-    (req: RequestWithBody<CreateBlogModel>, res: Response) => {
+    async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
 
+        const createDate = req.body;
+        const blogId = await BlogRepository.createBlog(createDate);
+        const newBlog1 = await BlogRepository.getBlogById(blogId.toString());
+        if (newBlog1) {
+            res.status(StatusCode.Created_201).json(newBlog1);
+            return
+        }
+        res.sendStatus(404);
+        /*
         let {
             name,
             description,
@@ -53,13 +67,12 @@ blogRoute.post(
         } = req.body;
 
         const newBlog = {
-            id: randomUUID(),
             name,
             description,
             websiteUrl
         }
-        BlogRepository.createBlog(newBlog);
-        return res.status(201).send(newBlog);
+        const createBBlog = await BlogRepository.createBlog(newBlog);
+        return res.status(201).send(createBBlog);*/
     });
 
 
@@ -67,42 +80,45 @@ blogRoute.put(
     '/:id',
     authMiddleware,
     blogValidation(),
-    (req: RequestWithParamsAndBody<Params, BlogBody>, res: Response) => {
+    async (req: RequestWithParamsAndBody<Params, BlogBody>, res: Response) => {
 
         const id = req.params.id;
-        let updatedBlog = BlogRepository.getBlogById(id);
-        console.log(updatedBlog)
+        if (!ObjectId.isValid(id)) {
+            res.sendStatus(404)
+            return;
+        }
+
 
         let {name, description, websiteUrl} = req.body;
+        let isBlogUpdated = await BlogRepository.updateBlog(id, {name, description, websiteUrl});
+        console.log(isBlogUpdated)
 
-        if (!updatedBlog) {
+        if (!isBlogUpdated) {
             res.sendStatus(404);
             return;
         }
 
-        updatedBlog.name = name;
-        updatedBlog.description = description;
-        updatedBlog.websiteUrl = websiteUrl;
 
-        return res.status(204).send(updatedBlog)
+        return res.sendStatus(204);
 
     });
 
 
 blogRoute.delete('/:id',
     authMiddleware,
-    (req: RequestWithParams<Params>, res: Response) => {
+    async (req: RequestWithParams<Params>, res: Response) => {
         const id = req.params.id;
-        const blog = BlogRepository.getBlogById(id);
-        if (!blog) {
-            res.sendStatus(404);
-            return;
-        }
-        const blogIndex = db.blogs.findIndex((item) => item.id == id)
-        if (blogIndex == -1) {
+        if (!ObjectId.isValid(id)) {
             res.sendStatus(404)
-            return
+            return;
+
         }
-        db.blogs.splice(blogIndex, 1)
-        return res.sendStatus(204)
+
+        const isDeleted = await BlogRepository.deleteBlogById(id);
+
+        if (!isDeleted) {
+            return res.sendStatus(StatusCode.NotFound_404)
+        } else {
+            return res.sendStatus(StatusCode.NoContent_204)
+        }
     })

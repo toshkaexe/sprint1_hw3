@@ -6,9 +6,6 @@ import {testingRoute} from "./routes/testing-route";
 export const app: Express = express();
 app.use(express.json())
 
-
-
-
 app.get('/', (req, res) => {
     res.send("HEllO HW2")
 })

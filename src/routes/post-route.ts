@@ -65,7 +65,7 @@ postRoute.put('/:id',
     async (req: RequestWithParamsAndBody<Params, PostBody>, res: Response) => {
         const id = req.params.id;
         const updateData = req.body;
-        const isUpdated = await PostRepository.updatePost(req.params.id, updateData);
+        const isUpdated = await PostRepository.updatePost({id: id}, updateData);
 
         if (!isUpdated) {
             res.sendStatus(StatusCode.NoContent_204);
@@ -81,7 +81,7 @@ postRoute.delete('/:id',
     authMiddleware,
     async (req: RequestWithParams<Params>, res: Response) => {
 
-        const isDeleted = await PostRepository.deletePost(req.params.id);
+        const isDeleted = await PostRepository.deletePost({id: req.params.id});
         if (isDeleted) res.sendStatus(StatusCode.NoContent_204)
         else res.sendStatus(StatusCode.NotFound_404)
     })

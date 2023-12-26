@@ -48,7 +48,7 @@ export class PostRepository {
         }
     }
 
-    static async updatePost(params: UpdatePostModel, p1: Params) {
+    static async updatePost(p1: Params, params: UpdatePostModel) {
         const blog = await BlogRepository.getBlogById(params.blogId);
         const result = await postCollection.updateOne({_id: new ObjectId(p1.id)},
             {

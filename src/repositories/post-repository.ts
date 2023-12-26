@@ -8,12 +8,12 @@ import {ObjectId, WithId} from "mongodb";
 
 import {BlogRepository} from "./blog-repository";
 import {inflate} from "zlib";
-import {postMapper} from "../models/posts/mappers/mapper";
+import {PostMapper} from "../models/posts/mappers/mapper";
 
 export class PostRepository {
     static async getAllPosts() {
         const posts = await postCollection.find({}).toArray();
-        return posts.map(postMapper);
+        return posts.map(PostMapper);
 
     }
 
@@ -23,7 +23,7 @@ export class PostRepository {
             if (!post) {
                 return null;
             }
-            return postMapper(post);
+            return PostMapper(post);
 
         } catch (err) {
             return null;
@@ -33,12 +33,12 @@ export class PostRepository {
 
     static async createPost(data: CreatePostModel) {
         const createdAt = new Date();
-        const blogName = await BlogRepository.getBlogById(data.blogId);
+        const blog = await BlogRepository.getBlogById(data.blogId);
 
-        if (blogName) {
+        if (blog) {
             const newPost = {
                 ...data,
-                blogName: blogName.name,
+                blogName: blog.name,
                 createdAt: createdAt.toISOString()
             }
             const result = await postCollection.insertOne(newPost);

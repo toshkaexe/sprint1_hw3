@@ -29,3 +29,4 @@ export const runDB = async () => {
         await client.close()
     }
 }
+

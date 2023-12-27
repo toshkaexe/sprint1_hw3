@@ -13,6 +13,7 @@ const uri = process.env.MONGO_URI
     || 'mongodb+srv://antonzeltser:admin@cluster0.rmbeaqk.mongodb.net/'
     || 'mongo://localhost:27017'
 
+console.log("url: ", uri);
 export const client = new MongoClient(uri);
 export const database = client.db('blogs-hws')
 

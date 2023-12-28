@@ -16,6 +16,7 @@ export class BlogRepository {
     }
 
     static async getBlogById(id: string): Promise<OutputBlogType | null> {
+        if (id == null) return null;
         try {
             const blog = await blogCollection.findOne({_id: new ObjectId(id)});
             if (!blog) {
@@ -28,16 +29,21 @@ export class BlogRepository {
     }
 
 
-    static async createBlog(createdData: CreateBlogModel): Promise<String> {
+    static async createBlog(createdData: CreateBlogModel): Promise<String | null> {
         const createdAt = new Date();
-        const newBlog: BlogDBType = {
-            ...createdData,
-            createdAt: createdAt.toISOString(),
-            isMembership: false
-        }
-        const blog = await blogCollection.insertOne(newBlog)
 
-        return blog.insertedId.toString();
+        try {
+            const newBlog: BlogDBType = {
+                ...createdData,
+                createdAt: createdAt.toISOString(),
+                isMembership: false
+            }
+            const blog = await blogCollection.insertOne(newBlog)
+
+            return blog.insertedId.toString();
+        } catch (err) {
+            return null;
+        }
     }
 
 

@@ -53,26 +53,16 @@ blogRoute.post(
 
         const createDate = req.body;
         const blogId = await BlogRepository.createBlog(createDate);
-        const newBlog = await BlogRepository.getBlogById(blogId);
+        if (!blogId){
+           res.sendStatus(404);
+            return;
+        }
+        const newBlog = await BlogRepository.getBlogById(blogId.toString());
         if (newBlog) {
             res.status(StatusCode.Created_201).json(newBlog);
             return
         }
         res.sendStatus(404);
-        /*
-        let {
-            name,
-            description,
-            websiteUrl
-        } = req.body;
-
-        const newBlog = {
-            name,
-            description,
-            websiteUrl
-        }
-        const createBBlog = await BlogRepository.createBlog(newBlog);
-        return res.status(201).send(createBBlog);*/
     });
 
 

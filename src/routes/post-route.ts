@@ -31,6 +31,7 @@ postRoute.get('/', async (req, res) => {
 postRoute.get('/:id', async (req, res) => {
     const id = req.params.id
     const post = await PostRepository.getPostById(id);
+    console.log(post);
 
     if (!post) {
         res.sendStatus(404)
@@ -52,6 +53,7 @@ postRoute.post(
             const newPost = await PostRepository.getPostById(postId);
             if (newPost) {
                 res.status(201).json(newPost);
+                return
             }
         }
         return res.sendStatus(404);
@@ -67,7 +69,7 @@ postRoute.put('/:id',
         const updateData = req.body;
         const isUpdated = await PostRepository.updatePost({id: id}, updateData);
 
-        if (!isUpdated) {
+        if (isUpdated) {
             res.sendStatus(StatusCode.NoContent_204);
             return
         }

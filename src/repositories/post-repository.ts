@@ -50,6 +50,7 @@ export class PostRepository {
 
     static async updatePost(p1: Params, params: UpdatePostModel) {
         const blog = await BlogRepository.getBlogById(params.blogId);
+        if (!blog){return  false;}
         const result = await postCollection.updateOne({_id: new ObjectId(p1.id)},
             {
                 $set: {

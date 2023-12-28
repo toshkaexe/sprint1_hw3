@@ -7,11 +7,13 @@ const blogIdValidation = body("blogId")
     .trim()
     .custom(async (value) => {
         const blog = await BlogRepository.getBlogById(value);
-        if (!blog) {
-            return false;
-        } else {
-            return true;
+
+        if (!blog ) {
+            //return false;
+            throw new Error("Blog is not exist")
         }
+            return true;
+
     })
     .withMessage("Incorrect blogId");
 
@@ -33,6 +35,8 @@ const shortDescriptionValidation = body("shortDescription")
     .trim()
     .isLength({min: 5, max: 100})
     .withMessage("Incorrect short description!");
+
+
 
 
 export const postValidation = () => [
